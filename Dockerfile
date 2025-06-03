@@ -1,28 +1,30 @@
 FROM alpine:3.18
 
-# Install dependencies (curl for health check)
+# 1. Install dependencies
 RUN apk add --no-cache curl
 
-# Create app directory with correct permissions
+# 2. Configure directories with strict permissions
 RUN mkdir -p /app/pb_data && \
-    chown -R 1000:1000 /app
+    chown -R 1000:1000 /app && \
+    chmod 700 /app/pb_data  # ← Added strict permissions
 
-# Copy PocketBase binary (must be Linux version!)
-COPY ./pocketbase /app/pocketbase
+# 3. Copy binary
+COPY --chown=1000:1000 ./pocketbase /app/pocketbase
 RUN chmod +x /app/pocketbase
 
-# Set environment variables
+# 4. Environment configuration
 ENV PB_DATA_DIR="/app/pb_data" \
-    PORT=8080
+    PORT="8080" \  # ← Force port 8080
+    PB_BIND_ADDR="0.0.0.0:8080"  # ← Explicit binding
 
-# Health check
+# 5. Health check
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD curl -f http://localhost:8080/api/health || exit 1
 
-# Run as non-root user
+# 6. Runtime configuration
 USER 1000
 WORKDIR /app
-
-# Expose and run
 EXPOSE 8080
-CMD ["/app/pocketbase", "serve", "--http=0.0.0.0:8080"]
+
+# 7. Startup command (with explicit flags)
+CMD ["/app/pocketbase", "serve", "--http=0.0.0.0:8080", "--dir=/app/pb_data"]
