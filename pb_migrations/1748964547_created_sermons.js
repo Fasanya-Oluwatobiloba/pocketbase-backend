@@ -107,7 +107,7 @@ migrate((app) => {
         "mimeTypes": [],
         "name": "cover_image",
         "presentable": false,
-        "protected": false,
+        "protected": true,
         "required": false,
         "system": false,
         "thumbs": [],
